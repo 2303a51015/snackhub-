@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SnackHub — Hostel Snack Exchange</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161a24;
+    --surface2: #1e2333;
+    --border: #2a2f42;
+    --accent: #f5a623;
+    --accent2: #ff6b6b;
+    --green: #2ecc71;
+    --blue: #4a9eff;
+    --text: #e8eaf2;
+    --muted: #7a7f96;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+  h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+
+  /* ── PAGES ── */
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: block; }
+
+  /* ── LOGIN ── */
+  #loginPage {
+    display: none;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 20% 50%, #1a1040 0%, var(--bg) 60%),
+                radial-gradient(ellipse at 80% 20%, #0f2a1a 0%, transparent 50%);
+    align-items: center;
+    justify-content: center;
+  }
+  #loginPage.active { display: flex; }
+  .login-wrap { width: 100%; max-width: 460px; padding: 24px; }
+  .login-logo { text-align: center; margin-bottom: 40px; }
+  .login-logo .icon { font-size: 52px; animation: float 3s ease-in-out infinite; display: block; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .login-logo h1 { font-size: 2.4rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .login-logo p { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 36px; }
+  .tab-row { display: flex; gap: 8px; margin-bottom: 28px; background: var(--bg); border-radius: 10px; padding: 4px; }
+  .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--muted); font-family: 'Syne',sans-serif; font-size: 0.9rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all .2s; }
+  .tab-btn.active { background: var(--surface2); color: var(--accent); }
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 7px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 13px 16px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: 'DM Sans',sans-serif; font-size: 0.95rem;
+    transition: border-color .2s; outline: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+  .form-group select option { background: var(--bg); }
+  .btn-primary {
+    width: 100%; padding: 14px; background: linear-gradient(135deg, var(--accent), #e8921a);
+    border: none; border-radius: 10px; color: #0d0f14; font-family: 'Syne',sans-serif;
+    font-size: 1rem; font-weight: 700; cursor: pointer; transition: transform .15s, box-shadow .15s;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,166,35,.3); }
+  .btn-primary:active { transform: translateY(0); }
+  .err-msg { color: var(--accent2); font-size: 0.85rem; margin-top: 10px; text-align: center; min-height: 20px; }
+
+  /* ── MAIN LAYOUT ── */
+  .topbar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 24px; height: 64px; display: flex; align-items: center; gap: 16px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-logo { font-family: 'Syne',sans-serif; font-weight: 800; font-size: 1.2rem; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .topbar-nav { display: flex; gap: 4px; flex: 1; margin-left: 20px; }
+  .nav-btn { padding: 8px 16px; border: none; background: transparent; color: var(--muted); font-family: 'DM Sans',sans-serif; font-size: 0.9rem; border-radius: 8px; cursor: pointer; transition: all .2s; }
+  .nav-btn.active, .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active { color: var(--accent); }
+  .topbar-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+  .user-chip { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--surface2); border-radius: 20px; font-size: 0.85rem; }
+  .user-chip .avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; color: #000; }
+  .cart-btn { position: relative; padding: 8px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); cursor: pointer; font-size: 1.1rem; }
+  .cart-badge { position: absolute; top: -4px; right: -4px; background: var(--accent2); color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .logout-btn { padding: 8px 16px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); cursor: pointer; font-size: 0.85rem; transition: all .2s; }
+  .logout-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .main-content { padding: 28px 24px; max-width: 1200px; margin: 0 auto; }
+
+  /* ── SECTIONS ── */
+  .section { display: none; }
+  .section.active { display: block; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .section-header h2 { font-size: 1.6rem; font-weight: 700; }
+  .section-header p { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+
+  /* ── CARDS ── */
+  .snack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .snack-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; transition: transform .2s, border-color .2s; cursor: pointer;
+  }
+  .snack-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .snack-emoji { font-size: 2.8rem; margin-bottom: 10px; display: block; }
+  .snack-name { font-family: 'Syne',sans-serif; font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; }
+  .snack-owner { color: var(--muted); font-size: 0.82rem; margin-bottom: 10px; }
+  .snack-owner span { color: var(--blue); }
+  .snack-price { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+  .snack-price-sub { font-size: 0.8rem; color: var(--muted); font-weight: 400; }
+  .snack-qty { display: inline-block; padding: 3px 10px; background: var(--surface2); border-radius: 20px; font-size: 0.78rem; color: var(--muted); margin-bottom: 12px; }
+  .snack-qty.low { color: var(--accent2); background: rgba(255,107,107,.1); }
+  .card-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .btn-sm { flex: 1; padding: 9px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); border-radius: 8px; font-size: 0.82rem; cursor: pointer; font-family: 'DM Sans',sans-serif; transition: all .2s; }
+  .btn-sm:hover { background: var(--surface); }
+  .btn-sm.primary { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 600; }
+  .btn-sm.primary:hover { background: #e8921a; }
+  .btn-sm.delivery { background: rgba(74,158,255,.15); border-color: var(--blue); color: var(--blue); }
+  .btn-sm.delivery:hover { background: rgba(74,158,255,.25); }
+
+  /* ── SEARCH ── */
+  .search-wrap { position: relative; margin-bottom: 24px; }
+  .search-wrap input { width: 100%; padding: 15px 20px 15px 48px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: 'DM Sans',sans-serif; font-size: 1rem; outline: none; transition: border-color .2s; }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; pointer-events: none; }
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .filter-chip { padding: 6px 16px; border: 1px solid var(--border); background: var(--surface); border-radius: 20px; color: var(--muted); font-size: 0.82rem; cursor: pointer; transition: all .2s; }
+  .filter-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(245,166,35,.1); }
+
+  /* ── MY SNACKS ── */
+  .add-snack-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 28px; }
+  .add-snack-form h3 { font-size: 1.1rem; margin-bottom: 20px; color: var(--accent); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+  .btn-add { padding: 13px 28px; background: var(--accent); border: none; border-radius: 10px; color: #000; font-family: 'Syne',sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all .2s; }
+  .btn-add:hover { background: #e8921a; transform: translateY(-1px); }
+  .my-snack-row { display: flex; align-items: center; gap: 14px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; }
+  .my-snack-row .emoji { font-size: 2rem; }
+  .my-snack-row .info { flex: 1; }
+  .my-snack-row .info h4 { font-size: 1rem; }
+  .my-snack-row .info p { font-size: 0.82rem; color: var(--muted); }
+  .badge-green { display: inline-block; padding: 2px 10px; background: rgba(46,204,113,.15); color: var(--green); border-radius: 20px; font-size: 0.78rem; }
+  .del-btn { padding: 7px 14px; border: 1px solid rgba(255,107,107,.3); background: rgba(255,107,107,.08); color: var(--accent2); border-radius: 8px; cursor: pointer; font-size: 0.82rem; transition: all .2s; }
+  .del-btn:hover { background: rgba(255,107,107,.2); }
+
+  /* ── CART / ORDERS ── */
+  .cart-item { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; }
+  .cart-item .emoji { font-size: 1.8rem; }
+  .cart-item .info { flex: 1; }
+  .cart-item .info h4 { font-size: 0.95rem; }
+  .cart-item .info p { font-size: 0.8rem; color: var(--muted); }
+  .cart-total-box { background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius); padding: 20px; margin-top: 20px; }
+  .total-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; color: var(--muted); }
+  .total-row.big { font-family: 'Syne',sans-serif; font-size: 1.2rem; color: var(--text); font-weight: 700; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; }
+  .delivery-toggle { display: flex; gap: 10px; margin: 14px 0; }
+  .delivery-opt { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface2); cursor: pointer; text-align: center; transition: all .2s; }
+  .delivery-opt.active { border-color: var(--blue); background: rgba(74,158,255,.1); }
+  .delivery-opt h4 { font-size: 0.9rem; margin-bottom: 2px; }
+  .delivery-opt p { font-size: 0.75rem; color: var(--muted); }
+
+  /* ── INCOMING ORDERS (SELLER VIEW) ── */
+  .incoming-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; transition: border-color .2s; }
+  .incoming-card.new-order { border-color: rgba(245,166,35,.5); box-shadow: 0 0 0 2px rgba(245,166,35,.08); }
+  .incoming-card.dispatched { border-color: rgba(46,204,113,.35); }
+  .buyer-info-box { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: var(--surface2); border-radius: 10px; margin: 12px 0; }
+  .buyer-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,var(--blue),#7b5cff); display:flex;align-items:center;justify-content:center; font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:#fff; flex-shrink:0; }
+  .buyer-info-box .bi-text h4 { font-size:.9rem; margin-bottom:2px; }
+  .buyer-info-box .bi-text p  { font-size:.8rem; color:var(--muted); }
+  .buyer-info-box .bi-room { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:var(--blue); margin-left:auto; text-align:right; }
+  .dispatch-btn { width:100%; margin-top:12px; padding:12px; background:linear-gradient(135deg,var(--accent),#e8921a); border:none; border-radius:10px; color:#000; font-family:'Syne',sans-serif; font-weight:700; font-size:.9rem; cursor:pointer; transition:all .2s; }
+  .dispatch-btn:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(245,166,35,.3); }
+  .dispatched-banner { display:flex; align-items:center; gap:10px; padding:10px 14px; background:rgba(46,204,113,.1); border:1px solid rgba(46,204,113,.3); border-radius:10px; margin-top:10px; font-size:.85rem; color:var(--green); }
+  .incoming-badge { position:absolute; top:-4px; right:-4px; background:var(--accent2); color:#fff; border-radius:50%; width:18px; height:18px; font-size:.7rem; display:flex; align-items:center; justify-content:center; font-weight:700; }
+  .nav-btn-wrap { position:relative; display:inline-block; }
+
+  /* ── ORDERS ── */
+  .order-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; }
+  .order-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .order-id { font-family: 'Syne',sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--accent); }
+  .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+  .status-badge.pending { background: rgba(245,166,35,.15); color: var(--accent); }
+  .status-badge.delivered { background: rgba(46,204,113,.15); color: var(--green); }
+  .status-badge.pickup { background: rgba(74,158,255,.15); color: var(--blue); }
+  .status-badge.dispatched { background: rgba(46,204,113,.15); color: var(--green); }
+
+  /* ── PICKUP INFO BOX ── */
+  .pickup-info-box { background: rgba(74,158,255,.08); border: 1px solid rgba(74,158,255,.3); border-radius: 10px; padding: 12px 16px; margin: 12px 0; display: flex; align-items: center; gap: 12px; }
+  .pickup-info-box .pi-icon { font-size: 1.6rem; }
+  .pickup-info-box .pi-text h4 { font-size: 0.88rem; color: var(--blue); margin-bottom: 2px; }
+  .pickup-info-box .pi-text p { font-size: 0.82rem; color: var(--muted); }
+  .pickup-info-box .pi-room { font-family: 'Syne',sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--blue); margin-left: auto; }
+
+  /* ── STAR RATING ── */
+  .rating-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .rating-section label { font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 6px; }
+  .star-row { display: flex; gap: 4px; align-items: center; }
+  .star { font-size: 1.4rem; cursor: pointer; transition: transform .1s; filter: grayscale(1); opacity: .4; }
+  .star:hover, .star.lit { filter: grayscale(0); opacity: 1; transform: scale(1.15); }
+  .star.lit { filter: grayscale(0); opacity: 1; }
+  .rating-done { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--green); }
+
+  /* ── SELLER PROFILE BADGE on snack card ── */
+  .seller-rating-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: rgba(245,166,35,.12); border-radius: 20px; font-size: 0.75rem; color: var(--accent); margin-left: 4px; }
+
+  /* ── DASHBOARD ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .stat-card .stat-num { font-family: 'Syne',sans-serif; font-size: 2rem; font-weight: 800; margin: 6px 0; }
+  .stat-card .stat-label { font-size: 0.82rem; color: var(--muted); }
+  .stat-card .stat-icon { font-size: 1.6rem; }
+
+  /* ── MODAL ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 32px; max-width: 500px; width: 100%; animation: modalIn .2s ease; }
+  @keyframes modalIn { from{transform:scale(.94);opacity:0} to{transform:scale(1);opacity:1} }
+  .modal h2 { font-size: 1.4rem; margin-bottom: 8px; }
+  .modal .emoji-big { font-size: 3.5rem; margin-bottom: 12px; display: block; }
+  .modal-seller { padding: 12px 16px; background: var(--surface2); border-radius: 10px; margin: 14px 0; font-size: 0.88rem; }
+  .modal-seller p { color: var(--muted); font-size: 0.8rem; margin-top: 3px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-close { padding: 12px 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 10px; cursor: pointer; font-family: 'DM Sans',sans-serif; transition: all .2s; }
+  .btn-close:hover { border-color: var(--text); color: var(--text); }
+
+  /* ── TOAST ── */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; font-size: 0.9rem; z-index: 999; transform: translateY(80px); opacity: 0; transition: all .3s; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--green); }
+  .toast.error { border-color: var(--accent2); }
+
+  /* ── EMPTY ── */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state h3 { color: var(--text); margin-bottom: 6px; }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:600px) {
+    .form-row, .form-row.three { grid-template-columns: 1fr; }
+    .topbar-nav { display: none; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN PAGE
+══════════════════════════════════════════ -->
+<div id="loginPage" class="page active">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <span class="icon">🍿</span>
+      <h1>SnackHub</h1>
+      <p>Hostel Snack Exchange Platform</p>
+    </div>
+    <div class="login-card">
+      <div class="tab-row">
+        <button class="tab-btn active" onclick="switchLoginTab('login')">Login</button>
+        <button class="tab-btn" onclick="switchLoginTab('register')">Register</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="loginForm">
+        <div class="form-group">
+          <label>College ID</label>
+          <input type="text" id="loginId" placeholder="e.g. CS22B001" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPass" placeholder="Enter your password" />
+        </div>
+        <button class="btn-primary" onclick="doLogin()">Login to SnackHub</button>
+        <div class="err-msg" id="loginErr"></div>
+        <p style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:14px;">
+          Demo: ID <b style="color:var(--accent)">CS22B001</b> / Pass <b style="color:var(--accent)">1234</b>
+        </p>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="registerForm" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="regName" placeholder="Your name" />
+          </div>
+          <div class="form-group">
+            <label>College ID</label>
+            <input type="text" id="regId" placeholder="CS22B001" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Department</label>
+            <select id="regDept">
+              <option value="">Select</option>
+              <option>CSE</option><option>ECE</option><option>MECH</option>
+              <option>CIVIL</option><option>IT</option><option>EEE</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Room No.</label>
+            <input type="text" id="regRoom" placeholder="A-204" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="regPass" placeholder="Create a password" />
+        </div>
+        <button class="btn-primary" onclick="doRegister()">Create Account</button>
+        <div class="err-msg" id="regErr"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+<div id="mainApp" class="page">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <span class="topbar-logo">🍿 SnackHub</span>
+    <nav class="topbar-nav">
+      <button class="nav-btn active" onclick="showSection('dashboard')">Dashboard</button>
+      <button class="nav-btn" onclick="showSection('browse')">Browse Snacks</button>
+      <button class="nav-btn" onclick="showSection('mySnacks')">My Snacks</button>
+      <span class="nav-btn-wrap">
+        <button class="nav-btn" onclick="showSection('incoming')" id="navIncoming">📬 Incoming Orders</button>
+        <span class="incoming-badge" id="incomingBadge" style="display:none">0</span>
+      </span>
+      <button class="nav-btn" onclick="showSection('orders')">My Orders</button>
+    </nav>
+    <div class="topbar-right">
+      <button class="cart-btn" onclick="showSection('cart')">🛒
+        <span class="cart-badge" id="cartBadge">0</span>
+      </button>
+      <div class="user-chip">
+        <div class="avatar" id="avatarText">?</div>
+        <span id="userChipName">User</span>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+
+    <!-- ── DASHBOARD ── -->
+    <div id="secDashboard" class="section active">
+      <div class="section-header">
+        <div>
+          <h2>Welcome back, <span id="dashWelcome" style="color:var(--accent)">User</span>! 👋</h2>
+          <p>Here's what's happening in your hostel today</p>
+        </div>
+      </div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div id="dashMyListings"></div>
+      <div id="dashRecent"></div>
+    </div>
+
+    <!-- ── BROWSE ── -->
+    <div id="secBrowse" class="section">
+      <div class="section-header">
+        <div><h2>Browse Snacks</h2><p id="browseCount">Loading...</p></div>
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search snacks, chips, biscuits…" oninput="doSearch()" />
+      </div>
+      <div class="filter-row" id="filterRow"></div>
+      <div class="snack-grid" id="browseGrid"></div>
+    </div>
+
+    <!-- ── MY SNACKS ── -->
+    <div id="secMySnacks" class="section">
+      <div class="section-header">
+        <div><h2>My Snacks</h2><p>You can list snacks you own to sell/exchange with others in the hostel</p></div>
+        <div style="padding:10px 18px;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.3);border-radius:10px;font-size:.82rem;color:var(--accent);text-align:center">
+          🏪 You are a <b>Seller</b><br/>
+          <span style="color:var(--muted);font-size:.75rem">List items below to start selling</span>
+        </div>
+      </div>
+      <div class="add-snack-form">
+        <h3>➕ Add New Snack</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Snack Name</label>
+            <input type="text" id="newSnackName" placeholder="e.g. Lays Magic Masala" />
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="newSnackCat">
+              <option>Chips & Crisps</option><option>Biscuits & Cookies</option>
+              <option>Chocolates</option><option>Instant Noodles</option>
+              <option>Drinks & Juices</option><option>Namkeen</option>
+              <option>Sweets & Candies</option><option>Nuts & Seeds</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row three">
+          <div class="form-group">
+            <label>Price (₹)</label>
+            <input type="number" id="newSnackPrice" placeholder="20" min="1" />
+          </div>
+          <div class="form-group">
+            <label>Quantity Available</label>
+            <input type="number" id="newSnackQty" placeholder="3" min="1" />
+          </div>
+          <div class="form-group">
+            <label>Emoji Icon</label>
+            <input type="text" id="newSnackEmoji" placeholder="🍟" maxlength="2" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description (optional)</label>
+          <textarea id="newSnackDesc" rows="2" placeholder="Extra details about the snack…"></textarea>
+        </div>
+        <button class="btn-add" onclick="addMySnack()">List Snack</button>
+      </div>
+      <div id="mySnacksList"></div>
+    </div>
+
+    <!-- ── INCOMING ORDERS (SELLER VIEW) ── -->
+    <div id="secIncoming" class="section">
+      <div class="section-header">
+        <div>
+          <h2>📬 Incoming Orders</h2>
+          <p>Orders placed for your listed snacks — pack & dispatch them!</p>
+        </div>
+      </div>
+      <div id="incomingList"></div>
+    </div>
+
+    <!-- ── CART ── -->
+    <div id="secCart" class="section">
+      <div class="section-header">
+        <div><h2>My Cart 🛒</h2><p>Review your selected items</p></div>
+      </div>
+      <div id="cartItems"></div>
+      <div id="cartSummary"></div>
+    </div>
+
+    <!-- ── ORDERS ── -->
+    <div id="secOrders" class="section">
+      <div class="section-header">
+        <div><h2>My Orders</h2><p>Track your purchases and deliveries</p></div>
+      </div>
+      <div id="ordersList"></div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /mainApp -->
+
+<!-- ══════════ SNACK DETAIL MODAL ══════════ -->
+<div class="modal-overlay" id="snackModal">
+  <div class="modal">
+    <span class="emoji-big" id="modalEmoji">🍟</span>
+    <h2 id="modalName">Snack Name</h2>
+    <div style="color:var(--muted);font-size:.85rem;margin-bottom:12px;" id="modalCategory"></div>
+    <div id="modalDesc" style="font-size:.9rem;color:var(--muted);margin-bottom:12px;"></div>
+    <div class="modal-seller">
+      <b id="modalSeller"></b>
+      <p id="modalSellerInfo"></p>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+      <div>
+        <div style="font-size:1.8rem;font-weight:800;color:var(--accent);" id="modalPrice"></div>
+        <div id="modalQty" style="font-size:.8rem;color:var(--muted);margin-top:2px;"></div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;color:var(--muted);">+₹10 delivery fee</div>
+        <div style="font-size:.75rem;color:var(--green);">Free if self-pickup</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-close" onclick="closeModal()">Cancel</button>
+      <button class="btn-sm delivery" style="flex:1;padding:12px" onclick="addToCartFromModal('delivery')">🚚 Deliver (+₹10)</button>
+      <button class="btn-sm primary" style="flex:1;padding:12px" onclick="addToCartFromModal('pickup')">🏃 Self Pickup</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  DATA STORE
+// ═══════════════════════════════════════════
+// Version bump — clears old seed data so new snacks appear
+const DATA_VERSION = 'v4';
+if (localStorage.getItem('snhDataVersion') !== DATA_VERSION) {
+  ['snhUsers','snhSnacks','snhOrders','snhCart','snhRatings'].forEach(k => localStorage.removeItem(k));
+  localStorage.setItem('snhDataVersion', DATA_VERSION);
+}
+let users = JSON.parse(localStorage.getItem('snhUsers') || '[]');
+let snacks = JSON.parse(localStorage.getItem('snhSnacks') || '[]');
+let orders = JSON.parse(localStorage.getItem('snhOrders') || '[]');
+let cart = JSON.parse(localStorage.getItem('snhCart') || '[]');
+let ratings = JSON.parse(localStorage.getItem('snhRatings') || '{}');  // { sellerId: [{orderId, raterId, stars}] }
+let currentUser = JSON.parse(localStorage.getItem('snhCurrentUser') || 'null');
+
+function getSellerRating(sellerId) {
+  const r = ratings[sellerId];
+  if (!r || r.length === 0) return null;
+  return r.reduce((a, b) => a + b.stars, 0) / r.length;
+}
+
+// Seed demo users if empty
+if (users.length === 0) {
+  users = [
+    { id: 'CS22B001', name: 'Arjun Kumar',   dept: 'CSE',   room: 'A-204', pass: '1234' },
+    { id: 'EC21B045', name: 'Priya Sharma',  dept: 'ECE',   room: 'B-112', pass: '1234' },
+    { id: 'ME22A033', name: 'Rahul Nair',    dept: 'MECH',  room: 'C-308', pass: '1234' },
+    { id: 'IT21C022', name: 'Sneha Reddy',   dept: 'IT',    room: 'D-105', pass: '1234' },
+    { id: 'EE23D011', name: 'Karthik Menon', dept: 'EEE',   room: 'A-310', pass: '1234' },
+    { id: 'CV22B078', name: 'Divya Patel',   dept: 'CIVIL', room: 'C-201', pass: '1234' },
+    { id: 'ME21A056', name: 'Aditya Singh',  dept: 'MECH',  room: 'B-404', pass: '1234' },
+  ];
+  save();
+}
+
+// Seed demo snacks if empty
+if (snacks.length === 0) {
+  const T = Date.now();
+  snacks = [
+    // Priya Sharma – B-112
+    { id: 's1',  ownerId: 'EC21B045', ownerName: 'Priya Sharma',  ownerRoom: 'B-112', name: 'Lays Magic Masala',       cat: 'Chips & Crisps',      price: 20, qty: 5, emoji: '🍟', desc: 'Unopened packet, bought yesterday', ts: T-1*60000 },
+    { id: 's2',  ownerId: 'EC21B045', ownerName: 'Priya Sharma',  ownerRoom: 'B-112', name: 'Frooti Mango Juice',      cat: 'Drinks & Juices',     price: 20, qty: 6, emoji: '🥭', desc: 'Chilled, buy fast!', ts: T-2*60000 },
+    { id: 's3',  ownerId: 'EC21B045', ownerName: 'Priya Sharma',  ownerRoom: 'B-112', name: 'Parle-G Biscuits',        cat: 'Biscuits & Cookies',  price: 10, qty:10, emoji: '🍪', desc: 'Full pack, sealed', ts: T-3*60000 },
+    { id: 's4',  ownerId: 'EC21B045', ownerName: 'Priya Sharma',  ownerRoom: 'B-112', name: 'Kurkure Masala Munch',    cat: 'Chips & Crisps',      price: 15, qty: 4, emoji: '🌶️', desc: 'Extra spicy flavour', ts: T-4*60000 },
+
+    // Rahul Nair – C-308
+    { id: 's5',  ownerId: 'ME22A033', ownerName: 'Rahul Nair',    ownerRoom: 'C-308', name: 'Dairy Milk Silk',         cat: 'Chocolates',          price: 55, qty: 2, emoji: '🍫', desc: 'Extra from care package', ts: T-5*60000 },
+    { id: 's6',  ownerId: 'ME22A033', ownerName: 'Rahul Nair',    ownerRoom: 'C-308', name: 'Maggi Masala Noodles',    cat: 'Instant Noodles',     price: 15, qty: 8, emoji: '🍜', desc: 'Masala flavour, sealed', ts: T-6*60000 },
+    { id: 's7',  ownerId: 'ME22A033', ownerName: 'Rahul Nair',    ownerRoom: 'C-308', name: 'Too Yumm! Multigrain',    cat: 'Chips & Crisps',      price: 10, qty: 4, emoji: '🥨', desc: 'Healthier option', ts: T-7*60000 },
+    { id: 's8',  ownerId: 'ME22A033', ownerName: 'Rahul Nair',    ownerRoom: 'C-308', name: 'Horlicks Biscuits',       cat: 'Biscuits & Cookies',  price: 25, qty: 3, emoji: '🫓', desc: 'Health biscuits', ts: T-8*60000 },
+    { id: 's9',  ownerId: 'ME22A033', ownerName: 'Rahul Nair',    ownerRoom: 'C-308', name: 'Cadbury 5 Star',          cat: 'Chocolates',          price: 20, qty: 5, emoji: '⭐', desc: '', ts: T-9*60000 },
+
+    // Sneha Reddy – D-105
+    { id: 's10', ownerId: 'IT21C022', ownerName: 'Sneha Reddy',   ownerRoom: 'D-105', name: 'Yippee Noodles',          cat: 'Instant Noodles',     price: 15, qty: 6, emoji: '🍝', desc: 'Magic masala flavour', ts: T-10*60000 },
+    { id: 's11', ownerId: 'IT21C022', ownerName: 'Sneha Reddy',   ownerRoom: 'D-105', name: 'Haldiram Aloo Bhujia',    cat: 'Namkeen',             price: 30, qty: 3, emoji: '🥔', desc: 'Big packet, sharing size', ts: T-11*60000 },
+    { id: 's12', ownerId: 'IT21C022', ownerName: 'Sneha Reddy',   ownerRoom: 'D-105', name: 'Sting Energy Drink',      cat: 'Drinks & Juices',     price: 30, qty: 4, emoji: '⚡', desc: 'Strawberry blast flavour', ts: T-12*60000 },
+    { id: 's13', ownerId: 'IT21C022', ownerName: 'Sneha Reddy',   ownerRoom: 'D-105', name: 'KitKat Wafer Bar',        cat: 'Chocolates',          price: 30, qty: 3, emoji: '🍫', desc: 'Have a break!', ts: T-13*60000 },
+    { id: 's14', ownerId: 'IT21C022', ownerName: 'Sneha Reddy',   ownerRoom: 'D-105', name: 'Pringles Original',       cat: 'Chips & Crisps',      price: 80, qty: 1, emoji: '🫙', desc: 'Imported, rare find!', ts: T-14*60000 },
+
+    // Karthik Menon – A-310
+    { id: 's15', ownerId: 'EE23D011', ownerName: 'Karthik Menon', ownerRoom: 'A-310', name: 'Oreo Chocolate Cream',    cat: 'Biscuits & Cookies',  price: 30, qty: 5, emoji: '🖤', desc: 'Classic Oreos, sealed', ts: T-15*60000 },
+    { id: 's16', ownerId: 'EE23D011', ownerName: 'Karthik Menon', ownerRoom: 'A-310', name: 'Roasted Peanuts Packet',  cat: 'Nuts & Seeds',        price: 20, qty: 7, emoji: '🥜', desc: 'Salted roasted, great for night study', ts: T-16*60000 },
+    { id: 's17', ownerId: 'EE23D011', ownerName: 'Karthik Menon', ownerRoom: 'A-310', name: 'Maaza Mango Tetra Pack',  cat: 'Drinks & Juices',     price: 25, qty: 5, emoji: '🧃', desc: '200ml pack, chilled', ts: T-17*60000 },
+    { id: 's18', ownerId: 'EE23D011', ownerName: 'Karthik Menon', ownerRoom: 'A-310', name: 'Bikano Chana Chur',       cat: 'Namkeen',             price: 20, qty: 4, emoji: '🫘', desc: 'Crunchy and spicy', ts: T-18*60000 },
+
+    // Divya Patel – C-201
+    { id: 's19', ownerId: 'CV22B078', ownerName: 'Divya Patel',   ownerRoom: 'C-201', name: 'Eclairs Toffees (10 pcs)',cat: 'Sweets & Candies',    price: 15, qty: 6, emoji: '🍬', desc: 'Chocolate eclairs', ts: T-19*60000 },
+    { id: 's20', ownerId: 'CV22B078', ownerName: 'Divya Patel',   ownerRoom: 'C-201', name: 'Bournvita Health Drink',  cat: 'Drinks & Juices',     price: 40, qty: 2, emoji: '☕', desc: '200g pack, small', ts: T-20*60000 },
+    { id: 's21', ownerId: 'CV22B078', ownerName: 'Divya Patel',   ownerRoom: 'C-201', name: 'Hide & Seek Choco Chip',  cat: 'Biscuits & Cookies',  price: 25, qty: 4, emoji: '🍪', desc: 'Dark chocolate chips', ts: T-21*60000 },
+    { id: 's22', ownerId: 'CV22B078', ownerName: 'Divya Patel',   ownerRoom: 'C-201', name: 'Sunflower Seeds Pack',    cat: 'Nuts & Seeds',        price: 25, qty: 3, emoji: '🌻', desc: 'Roasted, lightly salted', ts: T-22*60000 },
+
+    // Aditya Singh – B-404
+    { id: 's23', ownerId: 'ME21A056', ownerName: 'Aditya Singh',  ownerRoom: 'B-404', name: 'Thums Up 500ml',          cat: 'Drinks & Juices',     price: 35, qty: 3, emoji: '🥤', desc: 'Chilled bottle', ts: T-23*60000 },
+    { id: 's24', ownerId: 'ME21A056', ownerName: 'Aditya Singh',  ownerRoom: 'B-404', name: 'Doritos Nacho Cheese',    cat: 'Chips & Crisps',      price: 60, qty: 2, emoji: '🌽', desc: 'Imported bag, half left', ts: T-24*60000 },
+    { id: 's25', ownerId: 'ME21A056', ownerName: 'Aditya Singh',  ownerRoom: 'B-404', name: 'Kaju Katli (100g)',       cat: 'Sweets & Candies',    price: 70, qty: 1, emoji: '💎', desc: 'Home-made, sent by mom!', ts: T-25*60000 },
+    { id: 's26', ownerId: 'ME21A056', ownerName: 'Aditya Singh',  ownerRoom: 'B-404', name: 'Cup Noodles Chicken',     cat: 'Instant Noodles',     price: 30, qty: 5, emoji: '🍲', desc: 'Just add hot water', ts: T-26*60000 },
+  ];
+  save();
+}
+
+function save() {
+  localStorage.setItem('snhUsers', JSON.stringify(users));
+  localStorage.setItem('snhSnacks', JSON.stringify(snacks));
+  localStorage.setItem('snhOrders', JSON.stringify(orders));
+  localStorage.setItem('snhCart', JSON.stringify(cart));
+  localStorage.setItem('snhCurrentUser', JSON.stringify(currentUser));
+}
+
+// ═══════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════
+function switchLoginTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('loginForm').style.display   = tab === 'login'    ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+}
+
+function doLogin() {
+  const id   = document.getElementById('loginId').value.trim().toUpperCase();
+  const pass = document.getElementById('loginPass').value;
+  const user = users.find(u => u.id === id && u.pass === pass);
+  if (!user) { document.getElementById('loginErr').textContent = '⚠️ Invalid College ID or password.'; return; }
+  currentUser = user;
+  save();
+  bootApp();
+}
+
+function doRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const id   = document.getElementById('regId').value.trim().toUpperCase();
+  const dept = document.getElementById('regDept').value;
+  const room = document.getElementById('regRoom').value.trim();
+  const pass = document.getElementById('regPass').value;
+  if (!name||!id||!dept||!room||!pass) { document.getElementById('regErr').textContent='⚠️ Fill all fields.'; return; }
+  if (users.find(u => u.id === id)) { document.getElementById('regErr').textContent='⚠️ ID already registered.'; return; }
+  users.push({ id, name, dept, room, pass });
+  save();
+  toast('✅ Account created! Please login.', 'success');
+  switchLoginTab('login');
+  document.getElementById('loginId').value = id;
+}
+
+function doLogout() {
+  currentUser = null;
+  cart = [];
+  save();
+  document.getElementById('mainApp').classList.remove('active');
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('loginPage').classList.add('active');
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('loginId').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginErr').textContent = '';
+}
+
+function bootApp() {
+  document.getElementById('loginPage').classList.remove('active');
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('mainApp').classList.add('active');
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('avatarText').textContent = currentUser.name[0].toUpperCase();
+  document.getElementById('userChipName').textContent = currentUser.id;
+  document.getElementById('dashWelcome').textContent = currentUser.name.split(' ')[0];
+  updateCartBadge();
+  renderDashboard();
+  renderBrowse();
+  renderMySnacks();
+  renderOrders();
+  renderIncoming();
+  updateIncomingBadge();
+}
+
+// ═══════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+  const navMap = { dashboard:0, browse:1, mySnacks:2, incoming:3, orders:4 };
+  if (navMap[name] !== undefined)
+    document.querySelectorAll('.nav-btn')[navMap[name]].classList.add('active');
+  // Always re-render the section we switch to so data is fresh
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'browse')    renderBrowse();
+  if (name === 'mySnacks')  renderMySnacks();
+  if (name === 'incoming')  renderIncoming();
+  if (name === 'cart')      renderCart();
+  if (name === 'orders')    renderOrders();
+}
+
+// ═══════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════
+function renderDashboard() {
+  const mySnacks = snacks.filter(s => s.ownerId === currentUser.id && s.qty > 0);
+  const myOrders = orders.filter(o => o.buyerId === currentUser.id);
+  const availableFromOthers = snacks.filter(s => s.ownerId !== currentUser.id && s.qty > 0).length;
+  const totalSpent = myOrders.reduce((a,o) => a + o.total, 0);
+  const pendingIncoming = getIncomingOrders().filter(o => !o.dispatchedBy || !o.dispatchedBy[currentUser.id]).length;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-icon">🛍️</div><div class="stat-num" style="color:var(--accent)">${availableFromOthers}</div><div class="stat-label">Available to Buy</div></div>
+    <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-num" style="color:var(--blue)">${mySnacks.length}</div><div class="stat-label">My Active Listings</div></div>
+    <div class="stat-card" style="${pendingIncoming>0?'border-color:rgba(255,107,107,.4);background:rgba(255,107,107,.05)':''}" onclick="showSection('incoming')" ${pendingIncoming>0?'style="cursor:pointer"':''}>
+      <div class="stat-icon">📬</div>
+      <div class="stat-num" style="color:${pendingIncoming>0?'var(--accent2)':'var(--green)'}">${pendingIncoming}</div>
+      <div class="stat-label">${pendingIncoming>0?'⚠️ Pending to Dispatch':'Incoming Orders'}</div>
+      ${pendingIncoming>0?`<div style="font-size:.75rem;color:var(--accent2);margin-top:4px;cursor:pointer" onclick="showSection('incoming')">Tap to view →</div>`:''}
+    </div>
+    <div class="stat-card"><div class="stat-icon">🧾</div><div class="stat-num" style="color:var(--green)">${myOrders.length}</div><div class="stat-label">Orders Placed</div></div>
+    <div class="stat-card"><div class="stat-icon">💸</div><div class="stat-num" style="color:var(--accent2)">₹${totalSpent}</div><div class="stat-label">Total Spent</div></div>
+  `;
+
+  // Show MY listings on dashboard so I can see what I've posted
+  const myListingsHtml = mySnacks.length ? `
+    <h3 style="font-size:1.1rem;margin:0 0 12px;color:var(--accent)">📦 Your Active Listings <span style="font-size:.8rem;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400">(visible to others in Browse)</span></h3>
+    <div class="snack-grid" style="margin-bottom:28px">
+      ${mySnacks.map(s => `
+        <div class="snack-card" style="border-color:rgba(74,158,255,.3);cursor:default">
+          <span class="snack-emoji">${s.emoji||'🍬'}</span>
+          <div class="snack-name">${s.name}</div>
+          <div class="snack-owner" style="color:var(--blue)">👤 You · Room ${s.ownerRoom}</div>
+          <span class="snack-qty">${s.qty} left</span>
+          <div class="snack-price">₹${s.price} <span class="snack-price-sub">/ item</span></div>
+          <div style="margin-top:10px;font-size:.78rem;padding:6px 10px;background:rgba(74,158,255,.1);border-radius:8px;color:var(--blue);text-align:center">
+            👀 Others can order this from Browse
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  // Recently added by OTHER users
+  const recent = snacks.filter(s => s.ownerId !== currentUser.id && s.qty > 0)
+                       .sort((a,b) => b.ts - a.ts).slice(0, 6);
+  const recentHtml = `
+    <h3 style="font-size:1.1rem;margin-bottom:14px;color:var(--muted)">🔥 Recently Added by Others</h3>
+    <div class="snack-grid" id="recentSnacks">
+      ${recent.length
+        ? recent.map(s => snackCard(s)).join('')
+        : `<div class="empty-state"><div class="icon">🕵️</div><h3>No snacks from others yet</h3><p>Others haven't listed snacks yet!</p></div>`}
+    </div>
+  `;
+
+  document.getElementById('dashMyListings').innerHTML = myListingsHtml;
+  document.getElementById('dashRecent').innerHTML = recentHtml;
+}
+
+// ═══════════════════════════════════════════
+//  BROWSE & SEARCH
+// ═══════════════════════════════════════════
+const CATEGORIES = ['All','Chips & Crisps','Biscuits & Cookies','Chocolates','Instant Noodles','Drinks & Juices','Namkeen','Sweets & Candies','Nuts & Seeds','Other'];
+let activeFilter = 'All';
+
+function renderBrowse(query, cat) {
+  // Use current activeFilter if not passed
+  if (cat === undefined) cat = activeFilter;
+  if (query === undefined) query = (document.getElementById('searchInput') ? document.getElementById('searchInput').value : '');
+
+  document.getElementById('filterRow').innerHTML = CATEGORIES.map(c =>
+    `<span class="filter-chip${c===activeFilter?' active':''}" onclick="setFilter('${c}')">${c}</span>`
+  ).join('');
+
+  // Show ALL snacks from others (so newly listed snacks by others appear here)
+  let list = snacks.filter(s => s.ownerId !== currentUser.id && s.qty > 0);
+  if (cat !== 'All') list = list.filter(s => s.cat === cat);
+  if (query && query.trim()) {
+    const q = query.toLowerCase();
+    list = list.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      s.cat.toLowerCase().includes(q) ||
+      (s.desc || '').toLowerCase().includes(q) ||
+      s.ownerName.toLowerCase().includes(q)
+    );
+  }
+  list.sort((a,b) => b.ts - a.ts); // newest first
+
+  const count = list.length;
+  document.getElementById('browseCount').textContent = `${count} snack${count !== 1 ? 's' : ''} available`;
+  document.getElementById('browseGrid').innerHTML = list.length
+    ? list.map(s => snackCard(s)).join('')
+    : `<div class="empty-state"><div class="icon">🔎</div><h3>No snacks found</h3><p>Try a different search or filter, or check back later!</p></div>`;
+}
+
+function doSearch() {
+  renderBrowse(document.getElementById('searchInput').value, activeFilter);
+}
+
+function setFilter(cat) {
+  activeFilter = cat;
+  renderBrowse(document.getElementById('searchInput').value, cat);
+}
+// ═══════════════════════════════════════════
+//  SNACK CARD HTML
+// ═══════════════════════════════════════════
+function snackCard(s) {
+  const low = s.qty <= 2;
+  const avgRating = getSellerRating(s.ownerId);
+  const ratingPill = avgRating
+    ? `<span class="seller-rating-pill">⭐ ${avgRating.toFixed(1)}</span>`
+    : `<span class="seller-rating-pill" style="opacity:.5">No ratings yet</span>`;
+  return `<div class="snack-card" onclick="openModal('${s.id}')">
+    <span class="snack-emoji">${s.emoji||'🍬'}</span>
+    <div class="snack-name">${s.name}</div>
+    <div class="snack-owner">By <span>${s.ownerName}</span> · Room ${s.ownerRoom} ${ratingPill}</div>
+    <span class="snack-qty${low?' low':''}">Qty: ${s.qty}${low?' ⚠️ Low':''}</span>
+    <div class="snack-price">₹${s.price} <span class="snack-price-sub">/ item</span></div>
+    <div class="card-actions" onclick="event.stopPropagation()">
+      <button class="btn-sm delivery" onclick="quickAddCart('${s.id}','delivery')">🚚 +₹10</button>
+      <button class="btn-sm primary"  onclick="quickAddCart('${s.id}','pickup')">🏃 Pickup</button>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════
+let modalSnackId = null;
+function openModal(id) {
+  const s = snacks.find(x => x.id === id);
+  if (!s) return;
+  modalSnackId = id;
+  const avgRating = getSellerRating(s.ownerId);
+  const ratingStr = avgRating
+    ? `⭐ ${avgRating.toFixed(1)} / 5`
+    : 'No ratings yet';
+  document.getElementById('modalEmoji').textContent    = s.emoji || '🍬';
+  document.getElementById('modalName').textContent     = s.name;
+  document.getElementById('modalCategory').textContent = '📂 ' + s.cat;
+  document.getElementById('modalDesc').textContent     = s.desc || '';
+  document.getElementById('modalSeller').textContent   = s.ownerName + ' (' + s.ownerId + ')';
+  document.getElementById('modalSellerInfo').textContent = `📍 Room ${s.ownerRoom} · ${(users.find(u=>u.id===s.ownerId)?.dept||'')} · ${ratingStr}`;
+  document.getElementById('modalPrice').textContent    = '₹' + s.price;
+  document.getElementById('modalQty').textContent      = s.qty + ' left';
+  document.getElementById('snackModal').classList.add('open');
+}
+function closeModal() { document.getElementById('snackModal').classList.remove('open'); }
+function addToCartFromModal(type) { quickAddCart(modalSnackId, type); closeModal(); }
+
+// ═══════════════════════════════════════════
+//  CART
+// ═══════════════════════════════════════════
+function quickAddCart(snackId, deliveryType) {
+  const s = snacks.find(x => x.id === snackId);
+  if (!s) return;
+  const existing = cart.find(c => c.snackId === snackId && c.type === deliveryType);
+  if (existing) { existing.qty++; }
+  else { cart.push({ snackId, name: s.name, emoji: s.emoji||'🍬', price: s.price, type: deliveryType, ownerName: s.ownerName, ownerRoom: s.ownerRoom, ownerId: s.ownerId, qty: 1 }); }
+  save(); updateCartBadge();
+  toast(`${s.emoji||'🍬'} Added to cart (${deliveryType === 'delivery' ? '🚚 Delivery' : '🏃 Pickup'})`, 'success');
+}
+
+function updateCartBadge() {
+  const total = cart.reduce((a,c) => a+c.qty, 0);
+  document.getElementById('cartBadge').textContent = total;
+}
+
+function renderCart() {
+  const el = document.getElementById('cartItems');
+  const sumEl = document.getElementById('cartSummary');
+  if (cart.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">🛒</div><h3>Cart is empty</h3><p>Browse snacks and add items!</p><br><button class="btn-sm primary" style="width:auto;padding:10px 24px" onclick="showSection('browse')">Browse Snacks</button></div>`;
+    sumEl.innerHTML = '';
+    return;
+  }
+  el.innerHTML = cart.map((c,i) => `
+    <div class="cart-item">
+      <span class="emoji">${c.emoji}</span>
+      <div class="info">
+        <h4>${c.name}</h4>
+        <p>Seller: ${c.ownerName} · Room ${c.ownerRoom}</p>
+        <p>${c.type === 'delivery' ? '🚚 Door Delivery (+₹10)' : '🏃 Self Pickup (Free)'}</p>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:700;color:var(--accent)">₹${c.price + (c.type==='delivery'?10:0)}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+          <button class="btn-sm" style="padding:4px 10px;min-width:28px" onclick="changeQty(${i},-1)">−</button>
+          <span style="font-size:.9rem">${c.qty}</span>
+          <button class="btn-sm" style="padding:4px 10px;min-width:28px" onclick="changeQty(${i},1)">+</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  const subtotal = cart.reduce((a,c) => a + c.price * c.qty, 0);
+  const delivFee = cart.filter(c => c.type === 'delivery').reduce((a,c) => a + 10 * c.qty, 0);
+  const total    = subtotal + delivFee;
+  sumEl.innerHTML = `
+    <div class="cart-total-box">
+      <div class="total-row"><span>Subtotal</span><span>₹${subtotal}</span></div>
+      <div class="total-row"><span>Delivery Fees</span><span>₹${delivFee}</span></div>
+      <div class="total-row big"><span>Total</span><span>₹${total}</span></div>
+      <button class="btn-primary" style="margin-top:16px" onclick="placeOrder()">Place Order →</button>
+    </div>
+  `;
+}
+
+function changeQty(idx, delta) {
+  cart[idx].qty += delta;
+  if (cart[idx].qty <= 0) cart.splice(idx, 1);
+  save(); updateCartBadge(); renderCart();
+}
+
+function placeOrder() {
+  if (cart.length === 0) return;
+  const subtotal = cart.reduce((a,c) => a + c.price * c.qty, 0);
+  const delivFee = cart.filter(c => c.type === 'delivery').reduce((a,c) => a + 10 * c.qty, 0);
+  const order = {
+    id: 'ORD' + Date.now(),
+    buyerId: currentUser.id,
+    buyerName: currentUser.name,
+    items: [...cart],
+    total: subtotal + delivFee,
+    delivFee,
+    ts: Date.now(),
+    status: cart.some(c => c.type === 'delivery') ? 'pending' : 'pickup'
+  };
+  // Reduce quantities
+  cart.forEach(ci => {
+    const s = snacks.find(x => x.id === ci.snackId);
+    if (s) s.qty = Math.max(0, s.qty - ci.qty);
+  });
+  orders.unshift(order);
+  cart = [];
+  save(); updateCartBadge();
+  toast('✅ Order placed successfully!', 'success');
+  renderDashboard(); renderBrowse(); renderMySnacks(); renderOrders();
+  renderIncoming(); updateIncomingBadge();
+  showSection('orders');
+}
+
+// ═══════════════════════════════════════════
+//  MY SNACKS
+// ═══════════════════════════════════════════
+function addMySnack() {
+  const name  = document.getElementById('newSnackName').value.trim();
+  const cat   = document.getElementById('newSnackCat').value;
+  const price = parseInt(document.getElementById('newSnackPrice').value);
+  const qty   = parseInt(document.getElementById('newSnackQty').value);
+  const emoji = document.getElementById('newSnackEmoji').value.trim() || '🍬';
+  const desc  = document.getElementById('newSnackDesc').value.trim();
+  if (!name)  { toast('⚠️ Please enter a snack name.', 'error'); return; }
+  if (!price || price < 1) { toast('⚠️ Please enter a valid price.', 'error'); return; }
+  if (!qty   || qty < 1)   { toast('⚠️ Please enter a valid quantity.', 'error'); return; }
+
+  const newSnack = {
+    id: 's' + Date.now(),
+    ownerId:   currentUser.id,
+    ownerName: currentUser.name,
+    ownerRoom: currentUser.room,
+    name, cat, price, qty, emoji, desc,
+    ts: Date.now()
+  };
+  snacks.unshift(newSnack);
+  save(); // save FIRST before any render
+
+  // Clear form
+  ['newSnackName','newSnackPrice','newSnackQty','newSnackEmoji','newSnackDesc']
+    .forEach(id => document.getElementById(id).value = '');
+
+  toast(`✅ "${name}" listed! Others can now order it from Browse.`, 'success');
+
+  // Re-render all affected views
+  renderMySnacks();
+  renderDashboard();
+  renderBrowse(); // uses current activeFilter automatically
+}
+
+function deleteMySnack(id) {
+  if (!confirm('Remove this snack listing?')) return;
+  snacks = snacks.filter(s => s.id !== id);
+  save(); renderMySnacks(); renderDashboard(); renderBrowse();
+  toast('🗑️ Snack removed.', '');
+}
+
+function renderMySnacks() {
+  const mine = snacks.filter(s => s.ownerId === currentUser.id);
+  const el = document.getElementById('mySnacksList');
+  if (!mine.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📦</div><h3>No snacks listed yet</h3><p>Use the form above to list your first snack! It will appear in Browse Snacks for others.</p></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="background:rgba(74,158,255,.08);border:1px solid rgba(74,158,255,.25);border-radius:10px;padding:10px 16px;margin-bottom:14px;font-size:.85rem;color:var(--blue);">
+      👀 Your listed snacks are <b>visible to all other hostellers</b> in Browse Snacks.
+    </div>
+    ${mine.map(s => `
+      <div class="my-snack-row">
+        <span class="emoji">${s.emoji||'🍬'}</span>
+        <div class="info">
+          <h4>${s.name}</h4>
+          <p>${s.cat} · ₹${s.price}</p>
+        </div>
+        <div style="text-align:center;min-width:70px">
+          <div style="font-size:.7rem;color:var(--muted);margin-bottom:4px">QTY LEFT</div>
+          <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:${s.qty<=2?'var(--accent2)':'var(--green)'}">${s.qty}</div>
+        </div>
+        <span class="badge-green" style="${s.qty===0?'background:rgba(255,107,107,.12);color:var(--accent2)':''}">
+          ${s.qty > 0 ? '✅ Listed' : '❌ Out of Stock'}
+        </span>
+        <button class="del-btn" onclick="deleteMySnack('${s.id}')">Remove</button>
+      </div>
+    `).join('')}
+  `;
+}
+
+// ═══════════════════════════════════════════
+//  ORDERS
+// ═══════════════════════════════════════════
+function markDelivered(orderId) {
+  const o = orders.find(x => x.id === orderId);
+  if (!o) return;
+  o.status = 'delivered';
+  o.deliveredAt = Date.now();
+  save();
+  renderOrders();
+  // Show celebration toast
+  toast('🎉 Order received! Please rate your seller.', 'success');
+}
+
+function renderOrders() {
+  const mine = orders.filter(o => o.buyerId === currentUser.id);
+  const el = document.getElementById('ordersList');
+  el.innerHTML = mine.length
+    ? mine.map(o => {
+        // Group pickup items by seller
+        const pickupItems = o.items.filter(i => i.type === 'pickup');
+        const pickupBySeller = {};
+        pickupItems.forEach(i => {
+          const key = i.ownerRoom + '|||' + i.ownerName + '|||' + i.ownerId;
+          if (!pickupBySeller[key]) pickupBySeller[key] = [];
+          pickupBySeller[key].push(i);
+        });
+
+        const pickupBoxes = Object.entries(pickupBySeller).map(([key, items]) => {
+          const [room, name, sid] = key.split('|||');
+          const avgRating = getSellerRating(sid);
+          return `
+            <div class="pickup-info-box">
+              <div class="pi-icon">🏃</div>
+              <div class="pi-text">
+                <h4>Go pick up from ${name}</h4>
+                <p>${items.map(i => i.emoji + ' ' + i.name).join(', ')}</p>
+                ${avgRating ? `<p style="color:var(--accent);margin-top:3px">Seller rating: ${'⭐'.repeat(Math.round(avgRating))} (${avgRating.toFixed(1)})</p>` : ''}
+              </div>
+              <div class="pi-room">Room<br>${room}</div>
+            </div>`;
+        }).join('');
+
+        // Delivery address boxes
+        const deliveryItems = o.items.filter(i => i.type === 'delivery');
+        const delivBySeller = {};
+        deliveryItems.forEach(i => {
+          const key = i.ownerRoom + '|||' + i.ownerName + '|||' + i.ownerId;
+          if (!delivBySeller[key]) delivBySeller[key] = [];
+          delivBySeller[key].push(i);
+        });
+        const delivBoxes = Object.entries(delivBySeller).map(([key, items]) => {
+          const [room, name] = key.split('|||');
+          return `
+            <div class="pickup-info-box" style="background:rgba(245,166,35,.07);border-color:rgba(245,166,35,.3);">
+              <div class="pi-icon">🚚</div>
+              <div class="pi-text">
+                <h4 style="color:var(--accent)">Delivery from ${name}</h4>
+                <p>${items.map(i => i.emoji + ' ' + i.name).join(', ')}</p>
+                <p style="color:var(--muted);font-size:.75rem">Delivering to your room</p>
+              </div>
+              <div class="pi-room" style="color:var(--accent)">From<br>Room ${room}</div>
+            </div>`;
+        }).join('');
+
+        // Delivered celebration banner
+        const isDelivered = o.status === 'delivered';
+        const deliveredBanner = isDelivered ? `
+          <div style="background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.4);border-radius:12px;padding:14px 18px;margin:12px 0;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:2rem">✅</span>
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--green);font-size:1rem;">Order Delivered!</div>
+              <div style="font-size:.8rem;color:var(--muted);">Received on ${new Date(o.deliveredAt||o.ts).toLocaleString()}</div>
+            </div>
+          </div>` : '';
+
+        // Mark delivered button — show only for pending/pickup orders
+        const markBtn = (o.status === 'pending' || o.status === 'pickup') ? `
+          <button onclick="markDelivered('${o.id}')" style="
+            width:100%;margin-top:12px;padding:11px;
+            background:rgba(46,204,113,.12);border:1px solid rgba(46,204,113,.4);
+            border-radius:10px;color:var(--green);font-family:'Syne',sans-serif;
+            font-weight:700;font-size:.88rem;cursor:pointer;transition:all .2s;"
+            onmouseover="this.style.background='rgba(46,204,113,.22)'"
+            onmouseout="this.style.background='rgba(46,204,113,.12)'">
+            ✅ Mark as ${o.status === 'delivery' ? 'Delivered' : 'Picked Up'} / Received
+          </button>` : '';
+
+        // Unique sellers for rating — only show after delivered
+        const sellerIds = [...new Set(o.items.map(i => i.ownerId))].filter(sid => sid !== currentUser.id);
+        const ratingBlocks = isDelivered ? sellerIds.map(sid => {
+          const sellerName = o.items.find(i => i.ownerId === sid)?.ownerName || sid;
+          const existingRating = (ratings[sid] || []).find(r => r.orderId === o.id && r.raterId === currentUser.id);
+          if (existingRating) {
+            return `<div class="rating-done" style="margin-top:10px;">✅ You rated <b style="color:var(--text)">${sellerName}</b>: ${'⭐'.repeat(existingRating.stars)} (${existingRating.stars}/5)</div>`;
+          }
+          return `
+            <div class="rating-section">
+              <label>⭐ Rate your experience with <b style="color:var(--text)">${sellerName}</b></label>
+              <div class="star-row" id="stars_${o.id}_${sid}"
+                onmouseleave="resetStars('${o.id}','${sid}')">
+                ${[1,2,3,4,5].map(n =>
+                  `<span class="star" data-val="${n}"
+                    onmouseover="hoverStars('${o.id}','${sid}',${n})"
+                    onclick="rateSeller('${o.id}','${sid}',${n})">⭐</span>`
+                ).join('')}
+                <span style="font-size:.8rem;color:var(--muted);margin-left:6px" id="starLabel_${o.id}_${sid}">Tap a star</span>
+              </div>
+            </div>`;
+        }).join('') : '';
+
+        return `
+          <div class="order-card" id="order_${o.id}">
+            <div class="order-header">
+              <span class="order-id">${o.id}</span>
+              <span class="status-badge ${o.status}">${
+                o.status === 'pending'   ? '🚚 Out for Delivery' :
+                o.status === 'delivered' ? '✅ Delivered'        : '🏃 Self Pickup'
+              }</span>
+            </div>
+            <div style="font-size:.82rem;color:var(--muted);margin-bottom:10px">${new Date(o.ts).toLocaleString()}</div>
+            ${o.items.map(i => `
+              <div style="display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:5px">
+                <span>${i.emoji} ${i.name} × ${i.qty}
+                  <span style="color:${i.type==='delivery'?'var(--accent)':'var(--blue)'}">
+                    ${i.type === 'delivery' ? '🚚' : '🏃'}
+                  </span>
+                </span>
+                <span style="color:var(--accent)">₹${(i.price+(i.type==='delivery'?10:0))*i.qty}</span>
+              </div>`).join('')}
+            ${pickupBoxes}
+            ${delivBoxes}
+            <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;font-weight:700">
+              <span>Total</span><span style="color:var(--accent)">₹${o.total}</span>
+            </div>
+            ${markBtn}
+            ${deliveredBanner}
+            ${ratingBlocks}
+          </div>`;
+      }).join('')
+    : `<div class="empty-state"><div class="icon">📋</div><h3>No orders yet</h3><p>Browse snacks and place your first order!</p></div>`;
+}
+
+// ═══════════════════════════════════════════
+//  INCOMING ORDERS (SELLER VIEW)
+// ═══════════════════════════════════════════
+function updateIncomingBadge() {
+  // Count orders that contain MY snacks and are not yet dispatched by me
+  const pending = getIncomingOrders().filter(o => !o.dispatchedBy || !o.dispatchedBy[currentUser.id]);
+  const badge = document.getElementById('incomingBadge');
+  if (pending.length > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = pending.length;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function getIncomingOrders() {
+  // All orders that contain at least one item sold by me
+  return orders.filter(o =>
+    o.items.some(i => i.ownerId === currentUser.id)
+  );
+}
+
+function dispatchOrder(orderId) {
+  const o = orders.find(x => x.id === orderId);
+  if (!o) return;
+  if (!o.dispatchedBy) o.dispatchedBy = {};
+  o.dispatchedBy[currentUser.id] = Date.now();
+  save();
+  toast('🚀 Marked as dispatched! Buyer will be notified.', 'success');
+  renderIncoming();
+  updateIncomingBadge();
+  renderDashboard();
+}
+
+function renderIncoming() {
+  const incoming = getIncomingOrders();
+  const el = document.getElementById('incomingList');
+
+  if (!incoming.length) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="icon">📭</div>
+      <h3>No incoming orders yet</h3>
+      <p>When someone orders your snacks, they'll appear here.</p>
+    </div>`;
+    return;
+  }
+
+  // Sort: undispatched first, then by time
+  const sorted = [...incoming].sort((a, b) => {
+    const aDisp = a.dispatchedBy && a.dispatchedBy[currentUser.id];
+    const bDisp = b.dispatchedBy && b.dispatchedBy[currentUser.id];
+    if (aDisp && !bDisp) return 1;
+    if (!aDisp && bDisp) return -1;
+    return b.ts - a.ts;
+  });
+
+  el.innerHTML = sorted.map(o => {
+    // Only show items from THIS seller
+    const myItems = o.items.filter(i => i.ownerId === currentUser.id);
+    const isDispatched = o.dispatchedBy && o.dispatchedBy[currentUser.id];
+    const buyerUser = users.find(u => u.id === o.buyerId);
+    const buyerRoom = buyerUser ? buyerUser.room : '?';
+    const myTotal = myItems.reduce((a, i) => a + (i.price + (i.type === 'delivery' ? 10 : 0)) * i.qty, 0);
+
+    const dispatchedBanner = isDispatched ? `
+      <div class="dispatched-banner">
+        ✅ You dispatched this on ${new Date(o.dispatchedBy[currentUser.id]).toLocaleString()}
+      </div>` : '';
+
+    const dispatchBtn = !isDispatched ? `
+      <button class="dispatch-btn" onclick="dispatchOrder('${o.id}')">
+        🚀 Mark as Dispatched / Handed Over
+      </button>` : '';
+
+    const deliveryNote = myItems.some(i => i.type === 'delivery')
+      ? `<div style="margin-top:8px;padding:8px 12px;background:rgba(245,166,35,.08);border-radius:8px;font-size:.8rem;color:var(--accent);">🚚 Delivery order — carry to buyer's room</div>`
+      : `<div style="margin-top:8px;padding:8px 12px;background:rgba(74,158,255,.08);border-radius:8px;font-size:.8rem;color:var(--blue);">🏃 Pickup order — buyer will come to <b>Room ${currentUser.room}</b></div>`;
+
+    return `
+      <div class="incoming-card ${isDispatched ? 'dispatched' : 'new-order'}">
+        <div class="order-header">
+          <span class="order-id">${o.id}</span>
+          <span class="status-badge ${isDispatched ? 'dispatched' : 'pending'}">
+            ${isDispatched ? '✅ Dispatched' : '🔔 New Order'}
+          </span>
+        </div>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">${new Date(o.ts).toLocaleString()}</div>
+
+        <!-- Buyer Info -->
+        <div class="buyer-info-box">
+          <div class="buyer-avatar">${o.buyerName[0].toUpperCase()}</div>
+          <div class="bi-text">
+            <h4>${o.buyerName}</h4>
+            <p>${o.buyerId} · ${buyerUser ? buyerUser.dept : ''}</p>
+          </div>
+          <div class="bi-room">
+            <div style="font-size:.7rem;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400">DELIVER TO</div>
+            Room ${buyerRoom}
+          </div>
+        </div>
+
+        <!-- Items ordered from me -->
+        <div style="margin-bottom:4px;font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Your items in this order</div>
+        ${myItems.map(i => `
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:.9rem;padding:6px 0;border-bottom:1px solid var(--border);">
+            <span>${i.emoji} <b>${i.name}</b> × ${i.qty}</span>
+            <span style="color:var(--accent);font-weight:700">₹${(i.price + (i.type==='delivery'?10:0)) * i.qty}</span>
+          </div>`).join('')}
+        <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-top:8px;font-weight:700;">
+          <span style="color:var(--muted)">Your earnings</span>
+          <span style="color:var(--green)">₹${myTotal}</span>
+        </div>
+
+        ${deliveryNote}
+        ${dispatchBtn}
+        ${dispatchedBanner}
+      </div>`;
+  }).join('');
+}
+function hoverStars(orderId, sellerId, val) {
+  const row = document.getElementById(`stars_${orderId}_${sellerId}`);
+  if (!row) return;
+  row.querySelectorAll('.star').forEach(s => {
+    const n = parseInt(s.dataset.val);
+    s.style.filter = n <= val ? 'grayscale(0)' : 'grayscale(1)';
+    s.style.opacity = n <= val ? '1' : '0.3';
+  });
+  const lbl = document.getElementById(`starLabel_${orderId}_${sellerId}`);
+  if (lbl) lbl.textContent = ['','😞 Poor','😐 Fair','🙂 Good','😊 Great','🤩 Excellent!'][val];
+}
+
+function resetStars(orderId, sellerId) {
+  const row = document.getElementById(`stars_${orderId}_${sellerId}`);
+  if (!row) return;
+  row.querySelectorAll('.star').forEach(s => { s.style.filter='grayscale(1)'; s.style.opacity='.4'; });
+  const lbl = document.getElementById(`starLabel_${orderId}_${sellerId}`);
+  if (lbl) lbl.textContent = 'Tap a star';
+}
+
+function rateSeller(orderId, sellerId, stars) {
+  if (!ratings[sellerId]) ratings[sellerId] = [];
+  const existing = ratings[sellerId].findIndex(r => r.orderId === orderId && r.raterId === currentUser.id);
+  if (existing >= 0) ratings[sellerId][existing].stars = stars;
+  else ratings[sellerId].push({ orderId, raterId: currentUser.id, stars });
+  localStorage.setItem('snhRatings', JSON.stringify(ratings));
+  const labels = ['','Poor','Fair','Good','Great','Excellent'];
+  toast(`⭐ ${stars}/5 — ${labels[stars]}! Thanks for rating.`, 'success');
+  renderOrders();
+  renderBrowse();
+  renderDashboard();
+}
+
+// ═══════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+if (currentUser) { bootApp(); }
+</script>
+</body>
+</html>
